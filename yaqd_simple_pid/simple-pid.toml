@@ -1,0 +1,17 @@
+protocol = "simple-pid"
+doc = ""
+traits = ["is-daemon"]
+
+[links]
+source = "https://github.com/yaq-project/yaqd-simple-pid"
+bugtracker = "https://github.com/yaq-project/yaqd-simple-pid/-/issues"
+
+[installation]
+PyPI = "https://pypi.org/project/yaqd-simple-pid"
+
+[config]
+
+[state]
+
+[messages]
+
