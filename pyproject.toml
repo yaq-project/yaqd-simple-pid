@@ -11,6 +11,8 @@ description = "yaq daemon wrapping behavior of simple-pid python library"
 readme = "README.md"
 requires-python = ">=3.7"
 dependencies = [
+  "simple-pid>=2.0.0",
+  "yaqc",
   "yaqd-core>=2020.06.3",
 ]
 dynamic = ["version"]
