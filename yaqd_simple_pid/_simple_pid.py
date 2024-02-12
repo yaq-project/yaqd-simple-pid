@@ -2,25 +2,54 @@ __all__ = ["SimplePid"]
 
 import asyncio
 from typing import Dict, Any, List
+import yaqc  # type: ignore
 
-from yaqd_core import IsDaemon
+from simple_pid import PID
+
+from yaqd_core import HasDependents, HasPosition, IsDaemon
 
 
-class SimplePid(IsDaemon):
+class SimplePid(HasDependents, HasPosition, IsDaemon):
     _kind = "simple-pid"
 
     def __init__(self, name, config, config_filepath):
         super().__init__(name, config, config_filepath)
-        # Perform any unique initialization
+        self._pid = PID(
+            Kp=self._config["kp"],
+            Ki=self._config["ki"],
+            Kd=self._config["kd"],
+            proportional_on_measurement=self._config["proportional_on_measurement"],
+        )
+        self._sensor_daemon = yaqc.Client(
+            host=self._config["sensor_daemon"]["host"], port=self._config["sensor_daemon"]["port"]
+        )
+        self._control_daemon = yaqc.Client(
+            host=self._config["control_daemon"]["host"],
+            port=self._config["control_daemon"]["port"],
+        )
+
+    def get_dependent_hardware(self) -> Dict:
+        out = dict()
+        out["sensor_daemon"] = f"{self._sensor_daemon._host}:{self._sensor_daemon._port}"
+        out["control_daemon"] = f"{self._control_daemon._host}:{self._control_daemon._port}"
+        return out
+
+    def get_output(self) -> float:
+        return self._state["output"]
+
+    def reset(self):
+        self_pid.reset()
+
+    def _set_position(self, position):
+        self._pid.setpoint = position
 
     async def update_state(self):
-        """Continually monitor and update the current daemon state."""
-        # If there is no state to monitor continuously, delete this function
         while True:
-            # Perform any updates to internal state
             self._busy = False
-            # There must be at least one `await` in this loop
-            # This one waits for something to trigger the "busy" state
-            # (Setting `self._busy = True)
-            # Otherwise, you can simply `await asyncio.sleep(0.01)`
-            await self._busy_sig.wait()
+            self._state["position"] = self._sensor_daemon.get_measured()[
+                self._config["sensor_daemon"]["channel"]
+            ]
+            self._state["output"] = self._pid(self._state["position"])
+            print(self._state["output"])
+            self._control_daemon.set_position(self._state["output"])
+            await asyncio.sleep(1)

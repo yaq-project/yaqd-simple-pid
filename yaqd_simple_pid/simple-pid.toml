@@ -1,6 +1,6 @@
 protocol = "simple-pid"
-doc = ""
-traits = ["is-daemon"]
+doc = "yaq daemon wrapping behavior of simple-pid python library"
+traits = ["has-dependents", "has-position", "is-daemon"]
 
 [links]
 source = "https://github.com/yaq-project/yaqd-simple-pid"
@@ -9,9 +9,64 @@ bugtracker = "https://github.com/yaq-project/yaqd-simple-pid/-/issues"
 [installation]
 PyPI = "https://pypi.org/project/yaqd-simple-pid"
 
+[[types]]
+type = "record"
+name = "sensor_daemon"
+fields = [{"name"="host", "type"="string"},
+          {"name"="port", "type"="int"},
+	  {"name"="channel", "type"="string"}]
+
+[[types]]
+type = "record"
+name = "control_daemon"
+fields = [{"name"="host", "type"="string"},
+          {"name"="port", "type"="int"},
+	  {"name"="duty_cycle", "type"="boolean", "default"=false},
+	  {"name"="duty_period", "type"="float", "default"=1.0}]
+
+
 [config]
+
+[config.kp]
+type = "float"
+default = 1.0
+
+[config.ki]
+type = "float"
+default = 0.0
+
+[config.kd]
+type = "float"
+default = 0.0
+
+[config.proportional_on_measurement]
+type = "boolean"
+default = true
+
+[config.sensor_daemon]
+type = "sensor_daemon"
+
+[config.control_daemon]
+type = "control_daemon"
 
 [state]
 
+[state.output]
+type = "float"
+default = 0.0
+
 [messages]
 
+[messages.reset]
+doc = "Set each term to zero, clear the integral and derivative."
+
+[messages.get_output]
+doc = "Get current output as fed to control_daemon"
+response = "float"
+
+[properties.output]
+doc = "Current output as fed to control daemon."
+getter = "get_output"
+control_kind = "normal"
+record_kind = "data"
+type = "float"
