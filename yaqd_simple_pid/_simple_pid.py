@@ -2,7 +2,7 @@ __all__ = ["SimplePid"]
 
 import asyncio
 from typing import Dict, Any, List
-import yaqc
+import yaqc  # type: ignore
 
 from simple_pid import PID
 
